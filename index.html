@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Go Wasm Player</title>
+	<style>
+		*, *::before, *::after{
+			box-sizing: border-box;
+		}
+
+		.hidden {
+			display: none;
+		}
+
+		body, html {
+			min-height: 100vh;
+			margin: 0;
+			padding: 0;
+			font-family: Arial, Helvetica, sans-serif;
+			background-color: #f0f4f8;
+			color: #333;
+		}
+
+		#top {
+			padding: 20px;
+		}
+
+		#top-content {
+			display: flex;
+			flex-direction: column;
+			height: 100%;
+			gap: 1.5rem;
+		}
+
+		#header {
+			display: flex;
+			flex-direction: row;
+			justify-content: space-between;
+			align-items: baseline;
+		}
+
+		h1 {
+			color: #2c3e50;
+			margin-bottom: 0;
+		}
+
+		#drop-zone {
+			width: 100%;
+			min-height: 5rem;
+			padding: 20px;
+
+			line-height: 1.5;
+			text-align: center;
+
+			display: flex;
+			justify-content: center;
+			align-items: center;
+
+			border: 2px dashed #ccc;
+			border-radius: 20px;
+			background-color: #f8f8f8;
+			transition: background-color 0.3s;
+
+			cursor: pointer;
+		}
+
+		#drop-zone.drag-over {
+			background-color: #e8e8e8;
+		}
+
+		button {
+			padding: 8px;
+			font-size: 16px;
+			background-color: #3498db;
+			transition: background-color 0.3s;
+			color: white;
+			border: none;
+			border-radius: 5px;
+			cursor: pointer;
+		}
+
+		button:hover {
+			background-color: #2980b9;
+		}
+
+		button:disabled {
+			background-color: #cccccc;
+			cursor: not-allowed;
+		}
+
+		p {
+			margin: 0;
+		}
+
+		select {
+			padding: 4px;
+			border: 1px solid #bdc3c7;
+			border-radius: 5px;
+			font-size: 16px;
+		}
+
+		#message {
+			white-space: pre-wrap;
+			color: #333;
+			background-color: #f0f0f0;
+			border: 1px solid #ccc;
+			padding: 10px;
+			max-height: 200px;
+			overflow-y: auto;
+		}
+
+		#player {
+			width: 100vw;
+			height: 100vh;
+		}
+
+		iframe {
+			display: block;
+			width: 100%;
+			height: 100%;
+			border: none;
+		}
+	</style>
+</head>
+<body>
+
+	<div id="top">
+		<div id="top-content">
+			<div id="header">
+				<h1>Go Wasm Player</h1>
+				<a href="https://github.com/eihigh/go-wasm-player">GitHub</a>
+			</div>
+
+			<div id="drop-zone" onclick="select('#file-input').click()">
+				<span>
+					Drag and drop your wasm file here or
+					<button type="button">Choose File</button>
+				</span>
+				<input id="file-input" type="file" style="display: none;">
+			</div>
+
+			<p id="file-info">Selected file: (not selected)</p>
+
+			<label>Go version:
+				<select id="go-version">
+					<option value="go1.22.6">go1.22.6</option>
+					<option value="go1.23.0" selected>go1.23.0</option>
+				</select>
+			</label>
+
+			<button id="play-button" disabled>Play!</button>
+
+			<div id="message" class="hidden"></div>
+		</div>
+	</div>
+
+	<div id="player" class="hidden"></div>
+
+	<script>
+		const select = (query) => document.querySelector(query);
+
+		let wasmFile = null;
+
+		function setFile(file) {
+			if (file == null) { return; }
+			wasmFile = file;
+			const mib = file.size / 1024 / 1024;
+			select('#file-info').textContent = `Selected file: ${file.name} (${mib.toFixed(2)} MiB)`;
+			select('#play-button').disabled = false;
+		}
+
+		// Choose file
+		const fileInput = select('#file-input');
+		fileInput.addEventListener('change', (e) => {
+			setFile(e.target.files[0]);
+		});
+
+		// Drag and drop
+		const dropZone = select('#drop-zone');
+		dropZone.addEventListener('drop', (e) => {
+			e.preventDefault();
+			dropZone.classList.remove('drag-over');
+			setFile(e.dataTransfer.files[0]);
+		});
+
+		dropZone.addEventListener('dragover', (e) => {
+			e.preventDefault();
+			dropZone.classList.add('drag-over');
+		});
+
+		dropZone.addEventListener('dragleave', () => {
+			dropZone.classList.remove('drag-over');
+		});
+
+		// Set the initial state
+		history.replaceState("top", "", "/");
+
+		// Play button
+		const playButton = select('#play-button');
+		playButton.addEventListener('click', async () => {
+
+			// Push state
+			history.pushState("play", "", "/");
+
+			// Hide main content
+			select('#top').classList.add('hidden');
+
+			// Clear message
+			select('#message').classList.add('hidden');
+			select('#message').textContent = '';
+
+			// Remove existing iframe
+			let iframe = select('iframe');
+			if (iframe) {
+				iframe.remove();
+			}
+
+			// Show player
+			select('#player').classList.remove('hidden');
+
+			// Create a new iframe
+			iframe = document.createElement('iframe');
+			iframe.src = '/player.html';
+			iframe.allow = 'autoplay';
+			iframe.frameBorder = 0;
+			select('#player').appendChild(iframe);
+
+			// Send file to the iframe
+			iframe.onload = () => {
+				iframe.contentWindow.postMessage({
+					wasmFile: wasmFile,
+					goVersion: select('#go-version').value
+				}, '*');
+			};
+		});
+
+		// Receive message from the iframe
+		window.addEventListener('message', (e) => {
+			const { error } = e.data;
+
+			// Show error message
+			select('#message').textContent = "Error: " + error;
+			select('#message').classList.remove('hidden');
+
+			// Back to top
+			history.back();
+		});
+
+		// Back to top
+		window.addEventListener('popstate', (e) => {
+			// Show main content
+			select('#top').classList.remove('hidden');
+
+			if (select('#message').textContent !== '') {
+				// Keep message and player if there is an error
+				return;
+			}
+
+			// Clear message
+			select('#message').classList.add('hidden');
+			select('#message').textContent = '';
+
+			// Remove iframe
+			const iframe = select('iframe');
+			if (iframe) {
+				iframe.remove();
+			}
+
+			// Hide player
+			select('#player').classList.add('hidden');
+		});
+	</script>
+</body>
+</html>
