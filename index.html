@@ -45,6 +45,10 @@
 			margin-bottom: 0;
 		}
 
+		#header > span > a {
+			margin-inline-start: 1rem;
+		}
+
 		#drop-zone {
 			width: 100%;
 			min-height: 5rem;
@@ -129,7 +133,10 @@
 		<div id="top-content">
 			<div id="header">
 				<h1>Go Wasm Player</h1>
-				<a href="https://github.com/eihigh/go-wasm-player">GitHub</a>
+				<span>
+					<a href="https://go.dev/wiki/WebAssembly">Build Guide</a>
+					<a href="https://github.com/eihigh/go-wasm-player">GitHub</a>
+				</span>
 			</div>
 
 			<div id="drop-zone" onclick="select('#file-input').click()">
