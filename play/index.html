@@ -12,7 +12,8 @@
 <body>
 	<script>
 		// Play wasm on message
-		window.addEventListener('message', async (e) => {
+		const chan = new BroadcastChannel('player');
+		chan.addEventListener('message', async (e) => {
 			const { wasmFile, goVersion } = e.data;
 			try {
 				// Add a script element dynamically
@@ -30,9 +31,12 @@
 				const go = new Go();
 				const result = await WebAssembly.instantiate(await wasmFile.arrayBuffer(), go.importObject);
 				await go.run(result.instance);
+
 			} catch (error) {
 				// Send error message to the parent window
-				window.parent.postMessage({ error: error.message }, '*');
+				chan.postMessage({ msg: 'Error: ' + error.message }, '*');
+				// Close myself
+				window.close();
 			}
 		});
 	</script>

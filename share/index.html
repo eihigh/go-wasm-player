@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Go Wasm Share</title>
+		<link rel="stylesheet" type="text/css" href="/styles.css">
+	</head>
+	<body>
+		<main class="p-20 col gap-20">
+
+			<!-- header -->
+			<div class="row col-gap-10">
+				<h1 class="py-15 grow">Go Wasm Share</h1>
+				<div class="row gap-10">
+					<a href="/">Player</a>
+					<a href="https://go.dev/wiki/WebAssembly">Go wasm guide</a>
+					<a href="https://github.com/eihigh/go-wasm-player">GitHub</a>
+				</div>
+			</div>
+
+			<!-- card -->
+			<div class="center">
+
+				<section id="preview" class="card w-full max-w-480 p-20 col gap-15">
+					<h2 name="title">No Title</h2>
+					<h3 name="author">No Name</h3>
+					<div name="desc" class="leading-7 pre-wrap"></div>
+					<a name="dl-btn" class="block btn btn-primary px-20 py-10 self-start">Download wasm</a>
+					<div class="col gap-5 fg-light text-xs">
+						<p name="dl-text" class="break-all">Download Link:</p>
+						<p name="go">Go Version:</p>
+					</div>
+				</section>
+
+			</div>
+
+			<div class="col gap-10">
+				<a href="/" id="next" class="block btn btn-secondary px-20 py-10">Next (wasm downloaded)</a>
+				<a href="/edit" id="edit" class="block btn btn-secondary px-20 py-10">Edit Card</a>
+			</div>
+
+		</main>
+
+		<script>
+			const select = (query) => document.querySelector(query);
+			const selectAll = (query) => document.querySelectorAll(query);
+
+			// initialize values from query string
+			function init() {
+				const urlParams = new URLSearchParams(window.location.search);
+				const go = urlParams.get('go');
+				const dl = urlParams.get('dl');
+				const title = urlParams.get('title');
+				const author = urlParams.get('author');
+				const desc = urlParams.get('desc');
+
+				select('#preview [name=title]').textContent = title || 'No Title';
+				select('#preview [name=author]').textContent = author || 'No Name';
+				select('#preview [name=desc]').textContent = desc;
+				select('#preview [name=dl-btn]').href = dl;
+				select('#preview [name=dl-text]').textContent = `Download Link: ${dl}`;
+				select('#preview [name=go]').textContent = `Go Version: ${go || 'go1.23.0'}`;
+
+				// pass go version to next page
+				const params = new URLSearchParams();
+				params.set('go', go);
+				next = `${window.location.origin}/?${params.toString()}`;
+				select('#next').href = next;
+
+				// pass query string to edit page
+				select('#edit').href = `/edit${window.location.search}`;
+			}
+			init();
+		</script>
+	</body>
+</html>

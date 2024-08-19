@@ -1,155 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Go Wasm Player</title>
-	<style>
-		*, *::before, *::after{
-			box-sizing: border-box;
-		}
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Go Wasm Player</title>
+		<link rel="stylesheet" type="text/css" href="/styles.css">
+	</head>
+	<body>
 
-		.hidden {
-			display: none;
-		}
+		<main class="p-20 col gap-20">
 
-		body, html {
-			margin: 0;
-			padding: 0;
-			font-family: Arial, Helvetica, sans-serif;
-			background-color: #f0f4f8;
-			color: #333;
-		}
-
-		#top {
-			padding: 20px;
-		}
-
-		#top-content {
-			display: flex;
-			flex-direction: column;
-			height: 100%;
-			gap: 1.5rem;
-		}
-
-		#header {
-			display: flex;
-			flex-direction: row;
-			justify-content: space-between;
-			align-items: baseline;
-		}
-
-		h1 {
-			color: #2c3e50;
-			margin-bottom: 0;
-		}
-
-		#header > span > a {
-			margin-inline-start: 1rem;
-		}
-
-		#drop-zone {
-			width: 100%;
-			min-height: 5rem;
-			padding: 20px;
-
-			line-height: 1.5;
-			text-align: center;
-
-			display: flex;
-			justify-content: center;
-			align-items: center;
-
-			border: 2px dashed #ccc;
-			border-radius: 20px;
-			background-color: #f8f8f8;
-			transition: background-color 0.3s;
-
-			cursor: pointer;
-		}
-
-		#drop-zone.drag-over {
-			background-color: #e8e8e8;
-		}
-
-		button {
-			padding: 8px;
-			font-size: 16px;
-			background-color: #3498db;
-			transition: background-color 0.3s;
-			color: white;
-			border: none;
-			border-radius: 5px;
-			cursor: pointer;
-		}
-
-		button:hover {
-			background-color: #2980b9;
-		}
-
-		button:disabled {
-			background-color: #cccccc;
-			cursor: not-allowed;
-		}
-
-		p {
-			margin: 0;
-		}
-
-		select {
-			padding: 4px;
-			border: 1px solid #bdc3c7;
-			border-radius: 5px;
-			font-size: 16px;
-		}
-
-		#message {
-			white-space: pre-wrap;
-			color: #333;
-			background-color: #f0f0f0;
-			border: 1px solid #ccc;
-			padding: 10px;
-			max-height: 200px;
-			overflow-y: auto;
-		}
-
-		#player {
-			width: 100dvw;
-			height: 100dvh;
-		}
-
-		iframe {
-			display: block;
-			width: 100%;
-			height: 100%;
-			border: none;
-		}
-	</style>
-</head>
-<body>
-
-	<div id="top">
-		<div id="top-content">
-			<div id="header">
-				<h1>Go Wasm Player</h1>
-				<span>
-					<a href="https://go.dev/wiki/WebAssembly">Build Guide</a>
+			<!-- header -->
+			<div class="row col-gap-10">
+				<h1 class="py-15 grow">Go Wasm Player</h1>
+				<div class="row gap-10">
+					<a id="share" href="/edit" class="btn btn-secondary px-20 py-10">Share wasm</a>
+					<a href="https://go.dev/wiki/WebAssembly">Go wasm guide</a>
 					<a href="https://github.com/eihigh/go-wasm-player">GitHub</a>
-				</span>
+				</div>
 			</div>
 
-			<div id="drop-zone" onclick="select('#file-input').click()">
+			<!-- drop zone -->
+			<div id="drop-zone" class="leading-7 text-center p-40" onclick="select('#file-input').click()">
 				<span>
 					Drag and drop your wasm file here or
-					<button type="button">Choose File</button>
+					<button type="button" class="btn btn-primary px-20 py-10">Choose File</button>
 				</span>
 				<input id="file-input" type="file" style="display: none;">
 			</div>
 
+			<!-- file info -->
 			<p id="file-info">Selected file: (not selected)</p>
 
-			<label>Go version:
-				<select id="go-version">
+			<!-- go version -->
+			<div>
+				<label for="go-version">Go version:</label>
+				<select id="go-version" class="p-5">
 					<option value="go1.23.0" selected>go1.23.0</option>
 					<option value="go1.22.6">go1.22.6</option>
 					<option value="go1.21.13">go1.21.13</option>
@@ -163,129 +49,108 @@
 					<option value="go1.13.15">go1.13.15</option>
 					<option value="go1.12.17">go1.12.17</option>
 				</select>
-			</label>
+			</div>
 
-			<button id="play-button" disabled>Play!</button>
+			<!-- play button -->
+			<button id="play-button" class="btn btn-primary px-20 py-10" disabled>Play!</button>
 
-			<div id="message" class="hidden"></div>
-		</div>
-	</div>
+			<!-- message -->
+			<div id="message" class="p-10 none"></div>
 
-	<div id="player" class="hidden"></div>
+		</main>
 
-	<script>
-		const select = (query) => document.querySelector(query);
+		<script>
+			const select = (query) => document.querySelector(query);
 
-		let wasmFile = null;
-
-		function setFile(file) {
-			if (file == null) { return; }
-			wasmFile = file;
-			const mib = file.size / 1024 / 1024;
-			select('#file-info').textContent = `Selected file: ${file.name} (${mib.toFixed(2)} MiB)`;
-			select('#play-button').disabled = false;
-		}
-
-		// Choose file
-		const fileInput = select('#file-input');
-		fileInput.addEventListener('change', (e) => {
-			setFile(e.target.files[0]);
-		});
-
-		// Drag and drop
-		const dropZone = select('#drop-zone');
-		dropZone.addEventListener('drop', (e) => {
-			e.preventDefault();
-			dropZone.classList.remove('drag-over');
-			setFile(e.dataTransfer.files[0]);
-		});
-
-		dropZone.addEventListener('dragover', (e) => {
-			e.preventDefault();
-			dropZone.classList.add('drag-over');
-		});
-
-		dropZone.addEventListener('dragleave', () => {
-			dropZone.classList.remove('drag-over');
-		});
-
-		// Set the initial state
-		history.replaceState("top", "", "/");
-
-		// Play button
-		const playButton = select('#play-button');
-		playButton.addEventListener('click', async () => {
-
-			// Push state
-			history.pushState("play", "", "/");
-
-			// Hide main content
-			select('#top').classList.add('hidden');
-
-			// Clear message
-			select('#message').classList.add('hidden');
-			select('#message').textContent = '';
-
-			// Remove existing iframe
-			let iframe = select('iframe');
-			if (iframe) {
-				iframe.remove();
+			function switchClass(el, cls, bool) {
+				if (bool) {
+					el.classList.add(cls);
+				} else {
+					el.classList.remove(cls);
+				}
 			}
 
-			// Show player
-			select('#player').classList.remove('hidden');
+			let wasmFile;
 
-			// Create a new iframe
-			iframe = document.createElement('iframe');
-			iframe.src = '/player.html';
-			iframe.allow = 'autoplay';
-			iframe.frameBorder = 0;
-			select('#player').appendChild(iframe);
-
-			// Send file to the iframe
-			iframe.onload = () => {
-				iframe.contentWindow.postMessage({
-					wasmFile: wasmFile,
-					goVersion: select('#go-version').value
-				}, '*');
+			// recover wasmFile stored in the file input
+			window.onload = () => {
+				wasmFile = select('#file-input').files[0];
+				updateGlobal();
 			};
-		});
 
-		// Receive message from the iframe
-		window.addEventListener('message', (e) => {
-			const { error } = e.data;
+			// get the go version from the query string
+			const urlParams = new URLSearchParams(window.location.search);
+			const goVersion = select('#go-version');
+			goVersion.value = urlParams.get('go') || 'go1.23.0';
 
-			// Show error message
-			select('#message').textContent = "Error: " + error;
-			select('#message').classList.remove('hidden');
+			// set the go version to the share button
+			const share = select('#share');
+			share.href = `/edit?go=${goVersion.value}`;
+			select('#go-version').addEventListener('change', (e) => {
+				share.href = `/edit?go=${goVersion.value}`;
+			});
 
-			// Back to top
-			history.back();
-		});
-
-		// Back to top
-		window.addEventListener('popstate', (e) => {
-			// Show main content
-			select('#top').classList.remove('hidden');
-
-			if (select('#message').textContent !== '') {
-				// Keep message and player if there is an error
-				return;
+			// update global states
+			function updateGlobal() {
+				// update file info and play button
+				if (wasmFile == null) {
+					select('#file-info').textContent = 'Selected file: (not selected)';
+					select('#play-button').disabled = true;
+				} else {
+					const mib = wasmFile.size / 1024 / 1024;
+					select('#file-info').textContent = `Selected file: ${wasmFile.name} (${mib.toFixed(2)} MiB)`;
+					select('#play-button').disabled = false;
+				}
 			}
 
-			// Clear message
-			select('#message').classList.add('hidden');
-			select('#message').textContent = '';
+			// event handlers:
 
-			// Remove iframe
-			const iframe = select('iframe');
-			if (iframe) {
-				iframe.remove();
-			}
+			// choose file
+			const fileInput = select('#file-input');
+			fileInput.addEventListener('change', (e) => {
+				wasmFile = e.target.files[0];
+				updateGlobal();
+			});
 
-			// Hide player
-			select('#player').classList.add('hidden');
-		});
-	</script>
-</body>
+			// drag and drop
+			const dropZone = select('#drop-zone');
+			dropZone.addEventListener('drop', (e) => {
+				e.preventDefault();
+				dropZone.classList.remove('drag-over');
+				wasmFile = e.dataTransfer.files[0];
+				updateGlobal();
+			});
+
+			dropZone.addEventListener('dragover', (e) => {
+				e.preventDefault();
+				dropZone.classList.add('drag-over');
+			});
+
+			dropZone.addEventListener('dragleave', () => {
+				dropZone.classList.remove('drag-over');
+			});
+
+			// communicate wasm file and the error message with the player
+			const playerChan = new BroadcastChannel('player');
+
+			// play button
+			const playButton = select('#play-button');
+			playButton.addEventListener('click', async () => {
+				const player = window.open('/play', 'player');
+				player.onload = () => {
+					playerChan.postMessage({
+						wasmFile: wasmFile,
+						goVersion: select('#go-version').value
+					});
+				};
+			});
+
+			// receive message from the player
+			playerChan.addEventListener('message', (e) => {
+				const { msg } = e.data;
+				select('#message').textContent = msg;
+				switchClass(select('#message'), 'none', false);
+			});
+		</script>
+	</body>
 </html>

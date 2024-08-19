@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Go Wasm Share</title>
+		<link rel="stylesheet" type="text/css" href="/styles.css">
+	</head>
+	<body>
+		<main class="p-20 col gap-20">
+
+			<!-- header -->
+			<div class="row col-gap-10">
+				<h1 class="py-15 grow">Go Wasm Share</h1>
+				<div class="row gap-10">
+					<a href="/">Player</a>
+					<a href="https://go.dev/wiki/WebAssembly">Go wasm guide</a>
+					<a href="https://github.com/eihigh/go-wasm-player">GitHub</a>
+				</div>
+			</div>
+
+			<!-- form -->
+			<div class="center">
+
+				<!-- form items -->
+				<form class="card w-full max-w-480 p-20 col gap-15">
+
+					<!-- clear -->
+					<button type="button" name="clear" class="btn btn-warn px-20 py-10 self-end">Clear All</button>
+
+					<!-- go version -->
+					<label class="col gap-10">
+						<div class="block bold">Go Version (required)</div>
+						<select name="go" class="p-10">
+							<option value="go1.23.0" selected>go1.23.0</option>
+							<option value="go1.22.6">go1.22.6</option>
+							<option value="go1.21.13">go1.21.13</option>
+							<option value="go1.20.13">go1.20.13</option>
+							<option value="go1.19.13">go1.19.13</option>
+							<option value="go1.18.10">go1.18.10</option>
+							<option value="go1.17.13">go1.17.13</option>
+							<option value="go1.16.15">go1.16.15</option>
+							<option value="go1.15.15">go1.15.15</option>
+							<option value="go1.14.15">go1.14.15</option>
+							<option value="go1.13.15">go1.13.15</option>
+							<option value="go1.12.17">go1.12.17</option>
+						</select>
+					</label>
+
+					<!-- download link -->
+					<label class="col gap-10">
+						<div class="block bold">Download Link (required)</div>
+						<input type="text" name="dl" class="p-10" placeholder="https://..." required>
+					</label>
+
+					<!-- title -->
+					<label class="col gap-10">
+						<div class="block bold">Title</div>
+						<input type="text" name="title" class="p-10">
+					</label>
+
+					<!-- author -->
+					<label class="col gap-10">
+						<div class="block bold">Author</div>
+						<input type="text" name="author" class="p-10">
+					</label>
+
+					<!-- description -->
+					<label class="col gap-10">
+						<div class="block bold">Description</div>
+						<textarea name="desc" class="p-10 h-120"></textarea>
+					</label>
+
+				</form>
+			</div>
+
+			<!-- share -->
+			<h2 class="py-10">Share</h2>
+			<div id="share" class="col gap-10">
+
+				<!-- validation error -->
+				<p name="err" class="fg-warn">* Download Link is required.</p>
+
+				<!-- url preview -->
+				<input type="text" name="url" class="p-10 max-w-full" readonly>
+
+				<!-- copy -->
+				<button name="copy" class="btn btn-primary px-20 py-10">
+					<div name="clipboard">
+						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+							<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+						</svg>
+						Copy URL
+					</div>
+
+					<div name="copied" class="none">
+						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<path d="M20 6L9 17l-5-5"></path>
+						</svg>
+						Copied!
+					</div>
+				</button>
+
+				<a name="open" class="btn btn-secondary px-20 py-10" > Open URL </a>
+
+				<!-- TODO: Add url shortener                                                                                                                                                                -->
+				<!-- <button class="btn btn-secondary px-20 py-10">                                                                                                                                         -->
+				<!-- 	<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> -->
+				<!-- 		<path d="M16 8L8 16"></path>                                                                                                                                                         -->
+				<!-- 		<path d="M21 3h-6"></path>                                                                                                                                                           -->
+				<!-- 		<path d="M21 3v6"></path>                                                                                                                                                            -->
+				<!-- 		<path d="M3 21h6"></path>                                                                                                                                                            -->
+				<!-- 		<path d="M3 21v-6"></path>                                                                                                                                                           -->
+				<!-- 	</svg>                                                                                                                                                                                -->
+				<!-- 	Shorten URL                                                                                                                                                                           -->
+				<!-- </button>                                                                                                                                                                              -->
+			</div>
+
+			<!-- preview -->
+			<h2 class="py-10">Preview</h2>
+			<div class="center">
+
+				<section id="preview" class="card w-full max-w-480 p-20 col gap-15">
+					<h2 name="title">No Title</h2>
+					<h3 name="author">No Name</h3>
+					<div name="desc" class="leading-7 pre-wrap"></div>
+					<a name="dl-btn" class="block btn btn-primary px-20 py-10 self-start">Download wasm</a>
+					<div class="col gap-5 fg-light text-xs">
+						<p name="dl-text" class="break-all">Download Link:</p>
+						<p name="go">Go Version:</p>
+					</div>
+				</section>
+
+			</div>
+		</main>
+
+		<script>
+			const select = (query) => document.querySelector(query);
+			const selectAll = (query) => document.querySelectorAll(query);
+
+			function switchClass(el, cls, bool) {
+				if (bool) {
+					el.classList.add(cls);
+				} else {
+					el.classList.remove(cls);
+				}
+			}
+
+			// event listeners
+			select('form').addEventListener('input', update);
+			select('form [name=clear]').addEventListener('click', clearForm);
+			select('#share [name=copy]').addEventListener('click', copyUrlToClipboard);
+
+			// initialize values from query string
+			function init() {
+				const urlParams = new URLSearchParams(window.location.search);
+				const go = urlParams.get('go');
+				const dl = urlParams.get('dl');
+				const title = urlParams.get('title');
+				const author = urlParams.get('author');
+				const desc = urlParams.get('desc');
+
+				if (go) { select('form [name=go]').value = go; }
+				if (dl) { select('form [name=dl]').value = dl; }
+				if (title) { select('form [name=title]').value = title; }
+				if (author) { select('form [name=author]').value = author; }
+				if (desc)  { select('form [name=desc]').value = desc; }
+
+				update();
+			}
+
+			// update global states
+			function update() {
+				// get values
+				const go = select('form [name=go]').value;
+				const dl = select('form [name=dl]').value;
+				const title = select('form [name=title]').value;
+				const author = select('form [name=author]').value;
+				const desc = select('form [name=desc]').value;
+
+				// compute url
+				let url = '';
+				const ok = !!dl;
+				if (ok) {
+					const params = new URLSearchParams();
+					params.set('go', go);
+					params.set('title', title);
+					params.set('author', author);
+					params.set('dl', dl);
+					params.set('desc', desc);
+					url = `${window.location.origin}/share?${params.toString()}`;
+				}
+
+				// update share panel
+				select('#share [name=url]').value = url;
+				select('#share [name=open]').href = url;
+
+				switchClass(select('#share [name=err]'), 'none', ok); // hide err if ok
+				switchClass(select('#share [name=url]'), 'none', !ok); // hide url if not ok
+				select('#share [name=copy]').disabled = !ok; // disable copy if not ok
+				switchClass(select('#share [name=open]'), 'disabled', !ok); // disable open if not ok
+
+				// TODO: invalidate short url if url is changed
+
+				// update preview
+				select('#preview [name=title]').textContent = title || 'No Title';
+				select('#preview [name=author]').textContent = author || 'No Name';
+				select('#preview [name=desc]').textContent = desc;
+				select('#preview [name=dl-btn]').href = dl;
+				select('#preview [name=dl-text]').textContent = `Download Link: ${dl}`;
+				select('#preview [name=go]').textContent = `Go Version: ${go || 'go1.23.0'}`;
+			}
+
+			// clear form
+			function clearForm() {
+				if (!confirm('Are you sure you want to clear all input fields? This action cannot be undone.')) {
+					return;
+				}
+				selectAll('input').forEach((el) => el.value = '');
+				selectAll('textarea').forEach((el) => el.value = '');
+				select('select').value = 'go1.23.0';
+				update();
+			}
+
+			// copy URL
+			function copyUrlToClipboard() {
+				const url = select('#share [name=url]').value;
+				navigator.clipboard.writeText(url).then(() => {
+					select('#share [name=copy] [name=clipboard]').classList.add('none');
+					select('#share [name=copy] [name=copied]').classList.remove('none');
+					setTimeout(() => {
+						select('#share [name=copy] [name=clipboard]').classList.remove('none');
+						select('#share [name=copy] [name=copied]').classList.add('none');
+					}, 2000);
+				});
+			}
+
+			init();
+		</script>
+	</body>
+</html>
