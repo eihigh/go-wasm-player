@@ -6,16 +6,27 @@
 	<style>
 		canvas {
 			display: block;
-			height: 100dvh !important;
 		}
 	</style>
 </head>
 <body>
 	<script>
-		// Play wasm on message
+		let loaded = false;
+		let data = null;
+
+		document.addEventListener('DOMContentLoaded', () => {
+			loaded = true;
+			if (data != null) { runWasm(); }
+		});
+
 		const chan = new BroadcastChannel('player');
 		chan.addEventListener('message', async (e) => {
-			const { wasmFile, goVersion } = e.data;
+			data = e.data;
+			if (loaded) { runWasm(); }
+		});
+
+		async function runWasm() {
+			const { wasmFile, goVersion } = data;
 			try {
 				// Add a script element dynamically
 				const script = document.createElement('script');
@@ -39,7 +50,7 @@
 				// Close myself
 				window.close();
 			}
-		});
+		}
 	</script>
 </body>
 </html>
