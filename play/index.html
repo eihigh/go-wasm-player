@@ -13,6 +13,7 @@
 	<script>
 		let loaded = false;
 		let data = null;
+		let running = false;
 
 		document.addEventListener('DOMContentLoaded', () => {
 			loaded = true;
@@ -21,8 +22,10 @@
 
 		const chan = new BroadcastChannel('player');
 		chan.addEventListener('message', async (e) => {
+			if (running) { return; }
 			data = e.data;
 			if (loaded) { runWasm(); }
+			running = true;
 		});
 
 		async function runWasm() {
@@ -42,7 +45,8 @@
 				// Execute WebAssembly
 				const go = new Go();
 				const result = await WebAssembly.instantiate(await wasmFile.arrayBuffer(), go.importObject);
-				await go.run(result.instance);
+				document.getElementById('loading').remove();
+				go.run(result.instance);
 
 			} catch (error) {
 				// Send error message to the parent window
@@ -52,5 +56,6 @@
 			}
 		}
 	</script>
+	<p id="loading">Loading...</p>
 </body>
 </html>

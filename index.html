@@ -136,7 +136,7 @@
 			// play button
 			const playButton = select('#play-button');
 			playButton.addEventListener('click', async () => {
-				const player = window.open('/play', 'player');
+				const player = window.open('/play', '_blank');
 				player.onload = () => {
 					playerChan.postMessage({
 						wasmFile: wasmFile,
