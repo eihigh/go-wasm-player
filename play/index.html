@@ -15,6 +15,12 @@
 		let data = null;
 		let running = false;
 
+		const obs = new ResizeObserver((entries) => {
+			// trigger resize event manually
+			window.dispatchEvent(new Event('resize'));
+		});
+		obs.observe(document.body);
+
 		document.addEventListener('DOMContentLoaded', () => {
 			if (running) { return; }
 			loaded = true;
