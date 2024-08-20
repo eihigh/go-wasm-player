@@ -8,56 +8,60 @@
 	</head>
 	<body>
 
-		<main class="p-20 col gap-20">
+		<div id="main-wrapper">
+			<main class="p-20 col gap-20">
 
-			<!-- header -->
-			<div class="row col-gap-10">
-				<h1 class="py-15 grow">Go Wasm Player</h1>
-				<div class="row gap-10">
-					<a id="share" href="/edit" class="btn btn-secondary px-20 py-10">Share wasm</a>
-					<a href="https://go.dev/wiki/WebAssembly">Go wasm guide</a>
-					<a href="https://github.com/eihigh/go-wasm-player">GitHub</a>
+				<!-- header -->
+				<div class="row col-gap-10">
+					<h1 class="py-15 grow">Go Wasm Player</h1>
+					<div class="row gap-10">
+						<a id="share" href="/edit" class="btn btn-secondary px-20 py-10">Share wasm</a>
+						<a href="https://go.dev/wiki/WebAssembly">Go wasm guide</a>
+						<a href="https://github.com/eihigh/go-wasm-player">GitHub</a>
+					</div>
 				</div>
-			</div>
 
-			<!-- drop zone -->
-			<div id="drop-zone" class="leading-7 text-center p-40" onclick="select('#file-input').click()">
-				<span>
-					Drag and drop your wasm file here or
-					<button type="button" class="btn btn-primary px-20 py-10">Choose File</button>
-				</span>
-				<input id="file-input" type="file" style="display: none;">
-			</div>
+				<!-- drop zone -->
+				<div id="drop-zone" class="leading-7 text-center p-40" onclick="select('#file-input').click()">
+					<span>
+						Drag and drop your wasm file here or
+						<button type="button" class="btn btn-primary px-20 py-10">Choose File</button>
+					</span>
+					<input id="file-input" type="file" style="display: none;">
+				</div>
 
-			<!-- file info -->
-			<p id="file-info">Selected file: (not selected)</p>
+				<!-- file info -->
+				<p id="file-info">Selected file: (not selected)</p>
 
-			<!-- go version -->
-			<div>
-				<label for="go-version">Go version:</label>
-				<select id="go-version" class="p-5">
-					<option value="go1.23.0" selected>go1.23.0</option>
-					<option value="go1.22.6">go1.22.6</option>
-					<option value="go1.21.13">go1.21.13</option>
-					<option value="go1.20.13">go1.20.13</option>
-					<option value="go1.19.13">go1.19.13</option>
-					<option value="go1.18.10">go1.18.10</option>
-					<option value="go1.17.13">go1.17.13</option>
-					<option value="go1.16.15">go1.16.15</option>
-					<option value="go1.15.15">go1.15.15</option>
-					<option value="go1.14.15">go1.14.15</option>
-					<option value="go1.13.15">go1.13.15</option>
-					<option value="go1.12.17">go1.12.17</option>
-				</select>
-			</div>
+				<!-- go version -->
+				<div>
+					<label for="go-version">Go version:</label>
+					<select id="go-version" class="p-5">
+						<option value="go1.23.0" selected>go1.23.0</option>
+						<option value="go1.22.6">go1.22.6</option>
+						<option value="go1.21.13">go1.21.13</option>
+						<option value="go1.20.13">go1.20.13</option>
+						<option value="go1.19.13">go1.19.13</option>
+						<option value="go1.18.10">go1.18.10</option>
+						<option value="go1.17.13">go1.17.13</option>
+						<option value="go1.16.15">go1.16.15</option>
+						<option value="go1.15.15">go1.15.15</option>
+						<option value="go1.14.15">go1.14.15</option>
+						<option value="go1.13.15">go1.13.15</option>
+						<option value="go1.12.17">go1.12.17</option>
+					</select>
+				</div>
 
-			<!-- play button -->
-			<button id="play-button" class="btn btn-primary px-20 py-10" disabled>Play!</button>
+				<!-- play button -->
+				<button id="play-button" class="btn btn-primary px-20 py-10" disabled>Play!</button>
 
-			<!-- message -->
-			<div id="message" class="p-10 none"></div>
+				<!-- message -->
+				<div id="message" class="p-10 none"></div>
 
-		</main>
+			</main>
+		</div>
+
+		<div id="player" class="none"></div>
 
 		<script>
 			const select = (query) => document.querySelector(query);
@@ -71,6 +75,8 @@
 			}
 
 			let wasmFile;
+			// history.state is also used as a global state
+			history.replaceState(null, "", "/");
 
 			// recover wasmFile stored in the file input
 			window.onload = () => {
@@ -92,6 +98,23 @@
 
 			// update global states
 			function updateGlobal() {
+				if (history.state === "play") {
+					switchClass(select('#main-wrapper'), 'none', true);
+					switchClass(select('#player'), 'none', false);
+					return;
+				}
+
+				const msg = select('#message');
+				switchClass(msg, 'none', msg.textContent === '');
+
+				const iframe = select('#player iframe');
+				if (iframe) {
+					iframe.remove();
+				}
+
+				switchClass(select('#main-wrapper'), 'none', false);
+				switchClass(select('#player'), 'none', true);
+
 				// update file info and play button
 				if (wasmFile == null) {
 					select('#file-info').textContent = 'Selected file: (not selected)';
@@ -136,20 +159,50 @@
 			// play button
 			const playButton = select('#play-button');
 			playButton.addEventListener('click', async () => {
-				const player = window.open('/play', '_blank');
-				player.onload = () => {
+				// push history
+				history.pushState("play", "", "/");
+
+				// remove existing iframe
+				let iframe = select('#player iframe');
+				if (iframe) {
+					iframe.remove();
+				}
+
+				// create iframe
+				iframe = document.createElement('iframe');
+				iframe.src = '/player.html';
+				iframe.allow = 'autoplay';
+				iframe.frameBorder = 0;
+				select('#player').appendChild(iframe);
+
+				// send file to the player
+				iframe.onload = () => {
 					playerChan.postMessage({
 						wasmFile: wasmFile,
 						goVersion: select('#go-version').value
 					});
 				};
+
+				// update
+				updateGlobal();
 			});
 
 			// receive message from the player
 			playerChan.addEventListener('message', (e) => {
 				const { msg } = e.data;
+
+				// redirect
+				history.replaceState(null, "", "/");
+
+				// show message
 				select('#message').textContent = msg;
-				switchClass(select('#message'), 'none', false);
+
+				// update
+				updateGlobal();
+			});
+
+			window.addEventListener('popstate', () => {
+				updateGlobal();
 			});
 		</script>
 	</body>
